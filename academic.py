@@ -3,7 +3,8 @@ import keypirinha_util as kpu
 import keypirinha_net as kpnet
 
 class Academic(kp.Plugin):
-    ITEMCAT_DOG = kp.ItemCategory.USER_BASE + 1
+    ITEMCAT_DOI = kp.ItemCategory.USER_BASE + 1
+    ITEMCAT_RESULT = kp.ItemCategory.USER_BASE + 1
 
     def __init__(self):
         super().__init__()
@@ -19,14 +20,14 @@ class Academic(kp.Plugin):
                 label="Browse!",
                 short_desc="This browses google")
         ]
-        self.set_actions(self.ITEMCAT_DOG, actions)
+        self.set_actions(self.ITEMCAT_RESULT, actions)
 
     def on_catalog(self):
         catalog = [
             self.create_item(
-                category=self.ITEMCAT_DOG,
-                label="Hello!",
-                short_desc="This is dog",
+                category=self.ITEMCAT_DOI,
+                label="DOI",
+                short_desc="Look up a DOI",
                 target="target?",
                 args_hint=kp.ItemArgsHint.REQUIRED,
                 hit_hint=kp.ItemHitHint.NOARGS
@@ -35,16 +36,23 @@ class Academic(kp.Plugin):
         self.set_catalog(catalog)
 
     def on_suggest(self, user_input, items_chain):
-        if not items_chain or items_chain[-1].category() != self.ITEMCAT_DOG:
+        if not items_chain or items_chain[-1].category() != self.ITEMCAT_DOI:
             return
         if self.should_terminate(0.5):
             return
 
+        opener = kpnet.build_urllib_opener()
+        opener.addheaders = [("Accept", "text/x-bibliography")]
+        with opener.open("https://doi.org/" + user_input) as response:
+            refce = response.read()
+
+        refce = refce.decode(encoding="utf-8", errors="strict")
+
         self.set_suggestions([
             self.create_item(
-                category=self.ITEMCAT_DOG,
+                category=self.ITEMCAT_RESULT,
                 label="Woof!",
-                short_desc="This is dog barking",
+                short_desc=refce,
                 target="target?",
                 args_hint=kp.ItemArgsHint.FORBIDDEN,
                 hit_hint=kp.ItemHitHint.NOARGS
