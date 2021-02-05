@@ -1,6 +1,7 @@
 import keypirinha as kp
 import keypirinha_util as kpu
 import keypirinha_net as kpnet
+import urllib
 
 class Academic(kp.Plugin):
     ITEMCAT_DOI = kp.ItemCategory.USER_BASE + 1
@@ -49,8 +50,8 @@ class Academic(kp.Plugin):
                 self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT),
                 self.__result_item(url, self.ITEMTEXT_URL)
             ]
-        except:
-            suggestions = [self.__error_item()]
+        except urllib.error.URLError as e:
+            suggestions = [self.__error_item(e)]
 
         self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
 
@@ -79,10 +80,10 @@ class Academic(kp.Plugin):
                 data_bag=content
             )
 
-    def __error_item(self):
+    def __error_item(self, error):
         return self.create_error_item(
             label="Something went wrong...",
-            short_desc="Probably not a valid DOI?"
+            short_desc=f"{error.code}: {error.reason}"
         )
 
     def __doi_url(self, doi):
