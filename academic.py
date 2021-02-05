@@ -10,6 +10,14 @@ class Academic(kp.Plugin):
         "label": "Copy plaintext reference",
         "target": "plaintext"
     }
+    ITEMTEXT_BIBTEX = {
+        "label": "Copy BibTeX reference",
+        "target": "bibtex"
+    }
+
+    COPYABLE_TARGETS = [
+        "plaintext", "bibtex"
+    ]
 
     def __init__(self):
         super().__init__()
@@ -37,14 +45,16 @@ class Academic(kp.Plugin):
             return
 
         plaintext = self.__get_doi(user_input, "text/x-bibliography")
+        bibtex = self.__get_doi(user_input, "application/x-bibtex")
 
         suggestions = [
-            self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT)
+            self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT),
+            self.__result_item(bibtex, self.ITEMTEXT_BIBTEX)
         ]
         self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
 
     def on_execute(self, item, action):
-        if item.target() == "plaintext":
+        if item.target() in self.COPYABLE_TARGETS:
             kpu.set_clipboard(item.data_bag())
 
     def __get_doi(self, doi, content_type):
