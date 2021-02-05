@@ -6,6 +6,11 @@ class Academic(kp.Plugin):
     ITEMCAT_DOI = kp.ItemCategory.USER_BASE + 1
     ITEMCAT_RESULT = kp.ItemCategory.USER_BASE + 1
 
+    ITEMTEXT_PLAINTEXT = {
+        "label": "Copy plaintext reference",
+        "target": "plaintext"
+    }
+
     def __init__(self):
         super().__init__()
 
@@ -31,25 +36,32 @@ class Academic(kp.Plugin):
         if self.should_terminate(0.5):
             return
 
-        opener = kpnet.build_urllib_opener()
-        opener.addheaders = [("Accept", "text/x-bibliography")]
-        with opener.open("https://doi.org/" + user_input) as response:
-            refce = response.read()
+        plaintext = self.__get_doi(user_input, "text/x-bibliography")
 
-        refce = refce.decode(encoding="utf-8", errors="strict")
-
-        self.set_suggestions([
-            self.create_item(
-                category=self.ITEMCAT_RESULT,
-                label="Copy plaintext reference",
-                short_desc=refce,
-                target="plaintext",
-                args_hint=kp.ItemArgsHint.FORBIDDEN,
-                hit_hint=kp.ItemHitHint.NOARGS,
-                data_bag=refce
-            )
-        ], kp.Match.ANY, kp.Sort.NONE)
+        suggestions = [
+            self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT)
+        ]
+        self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
 
     def on_execute(self, item, action):
         if item.target() == "plaintext":
             kpu.set_clipboard(item.data_bag())
+
+    def __get_doi(self, doi, content_type):
+        opener = kpnet.build_urllib_opener()
+        opener.addheaders = [("Accept", content_type)]
+        with opener.open("https://doi.org/" + doi) as response:
+            refce = response.read()
+
+        return refce.decode(encoding="utf-8", errors="strict")
+
+    def __result_item(self, content, item_text):
+        return self.create_item(
+                category=self.ITEMCAT_RESULT,
+                label=item_text["label"],
+                short_desc=content,
+                target=item_text["target"],
+                args_hint=kp.ItemArgsHint.FORBIDDEN,
+                hit_hint=kp.ItemHitHint.NOARGS,
+                data_bag=content
+            )
