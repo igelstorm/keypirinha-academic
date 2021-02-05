@@ -10,17 +10,7 @@ class Academic(kp.Plugin):
         super().__init__()
 
     def on_start(self):
-        actions = [
-            self.create_action(
-                name="bark",
-                label="Bark!",
-                short_desc="This barks into the clipboard"),
-            self.create_action(
-                name="browse",
-                label="Browse!",
-                short_desc="This browses google")
-        ]
-        self.set_actions(self.ITEMCAT_RESULT, actions)
+        return
 
     def on_catalog(self):
         catalog = [
@@ -28,7 +18,7 @@ class Academic(kp.Plugin):
                 category=self.ITEMCAT_DOI,
                 label="DOI",
                 short_desc="Look up a DOI",
-                target="target?",
+                target="doi",
                 args_hint=kp.ItemArgsHint.REQUIRED,
                 hit_hint=kp.ItemHitHint.NOARGS
             )
@@ -51,18 +41,15 @@ class Academic(kp.Plugin):
         self.set_suggestions([
             self.create_item(
                 category=self.ITEMCAT_RESULT,
-                label="Woof!",
+                label="Copy plaintext reference",
                 short_desc=refce,
-                target="target?",
+                target="plaintext",
                 args_hint=kp.ItemArgsHint.FORBIDDEN,
-                hit_hint=kp.ItemHitHint.NOARGS
+                hit_hint=kp.ItemHitHint.NOARGS,
+                data_bag=refce
             )
         ], kp.Match.ANY, kp.Sort.NONE)
 
     def on_execute(self, item, action):
-        if action and action.name() == "browse":
-            kpu.web_browser_command(private_mode=False, url="https://www.google.com",
-                                    execute=True)
-
-        if action and action.name() == "bark":
-            kpu.set_clipboard("woof")
+        if item.target() == "plaintext":
+            kpu.set_clipboard(item.data_bag())
