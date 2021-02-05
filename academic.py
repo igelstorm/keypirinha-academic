@@ -36,18 +36,22 @@ class Academic(kp.Plugin):
     def on_suggest(self, user_input, items_chain):
         if not items_chain or items_chain[-1].category() != self.ITEMCAT_DOI:
             return
-        if self.should_terminate(0.5):
+        if self.should_terminate(0.2):
             return
 
-        plaintext = self.__get_doi(user_input, "text/x-bibliography")
-        bibtex = self.__get_doi(user_input, "application/x-bibtex")
-        url = self.__doi_url(user_input)
+        try:
+            plaintext = self.__get_doi(user_input, "text/x-bibliography")
+            bibtex = self.__get_doi(user_input, "application/x-bibtex")
+            url = self.__doi_url(user_input)
 
-        suggestions = [
-            self.__result_item(bibtex, self.ITEMTEXT_BIBTEX),
-            self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT),
-            self.__result_item(url, self.ITEMTEXT_URL)
-        ]
+            suggestions = [
+                self.__result_item(bibtex, self.ITEMTEXT_BIBTEX),
+                self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT),
+                self.__result_item(url, self.ITEMTEXT_URL)
+            ]
+        except:
+            suggestions = [self.__error_item()]
+
         self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
 
     def on_execute(self, item, action):
@@ -74,6 +78,12 @@ class Academic(kp.Plugin):
                 hit_hint=kp.ItemHitHint.NOARGS,
                 data_bag=content
             )
+
+    def __error_item(self):
+        return self.create_error_item(
+            label="Something went wrong...",
+            short_desc="Probably not a valid DOI?"
+        )
 
     def __doi_url(self, doi):
         return "https://doi.org/" + doi
