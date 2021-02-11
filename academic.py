@@ -41,24 +41,21 @@ class Academic(kp.Plugin):
             return
 
         suggestions = []
-        suggestions.append(self.__result_item(
+
+        self.__add_suggestion(suggestions, self.__result_item(
             self.__doi_url(user_input),
             self.ITEMTEXT_URL
         ))
-        self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
 
         try:
             plaintext = self.__get_doi(user_input, "text/x-bibliography")
-            suggestions.append(self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT))
-            self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
+            self.__add_suggestion(suggestions, self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT))
 
             bibtex = self.__get_doi(user_input, "application/x-bibtex")
-            suggestions.append(self.__result_item(bibtex, self.ITEMTEXT_BIBTEX))
-            self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
+            self.__add_suggestion(suggestions, self.__result_item(bibtex, self.ITEMTEXT_BIBTEX))
 
         except urllib.error.URLError as e:
-            suggestions.append(self.__error_item(e))
-            self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
+            self.__add_suggestion(suggestions, self.__error_item(e))
 
     def on_execute(self, item, action):
         if item.target() in self.COPYABLE_TARGETS:
@@ -93,3 +90,7 @@ class Academic(kp.Plugin):
 
     def __doi_url(self, doi):
         return "https://doi.org/" + doi
+
+    def __add_suggestion(self, suggestions, suggestion):
+        suggestions.append(suggestion)
+        self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
