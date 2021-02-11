@@ -42,17 +42,11 @@ class Academic(kp.Plugin):
 
         suggestions = []
 
-        self.__add_suggestion(suggestions, self.__result_item(
-            self.__doi_url(user_input),
-            self.ITEMTEXT_URL
-        ))
+        self.__add_suggestion(suggestions, self.__gimme_url(user_input))
 
         try:
-            plaintext = self.__get_doi(user_input, "text/x-bibliography")
-            self.__add_suggestion(suggestions, self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT))
-
-            bibtex = self.__get_doi(user_input, "application/x-bibtex")
-            self.__add_suggestion(suggestions, self.__result_item(bibtex, self.ITEMTEXT_BIBTEX))
+            self.__add_suggestion(suggestions, self.__gimme_bibtex(user_input))
+            self.__add_suggestion(suggestions, self.__gimme_plaintext(user_input))
 
         except urllib.error.URLError as e:
             self.__add_suggestion(suggestions, self.__error_item(e))
@@ -94,3 +88,12 @@ class Academic(kp.Plugin):
     def __add_suggestion(self, suggestions, suggestion):
         suggestions.append(suggestion)
         self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
+
+    def __gimme_bibtex(self, user_input):
+        return self.__result_item(self.__get_doi(user_input, "application/x-bibtex"), self.ITEMTEXT_BIBTEX)
+
+    def __gimme_plaintext(self, user_input):
+        return self.__result_item(self.__get_doi(user_input, "text/x-bibliography"), self.ITEMTEXT_PLAINTEXT)
+
+    def __gimme_url(self, user_input):
+        return self.__result_item(self.__doi_url(user_input), self.ITEMTEXT_URL)
