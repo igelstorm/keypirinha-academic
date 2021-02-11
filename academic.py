@@ -40,18 +40,25 @@ class Academic(kp.Plugin):
         if self.should_terminate(0.2):
             return
 
+        suggestions = []
+        suggestions.append(self.__result_item(
+            self.__doi_url(user_input),
+            self.ITEMTEXT_URL
+        ))
+        self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
+
         try:
             plaintext = self.__get_doi(user_input, "text/x-bibliography")
             bibtex = self.__get_doi(user_input, "application/x-bibtex")
             url = self.__doi_url(user_input)
 
-            suggestions = [
+            suggestions.extend((
                 self.__result_item(bibtex, self.ITEMTEXT_BIBTEX),
                 self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT),
                 self.__result_item(url, self.ITEMTEXT_URL)
-            ]
+            ))
         except urllib.error.URLError as e:
-            suggestions = [self.__error_item(e)]
+            suggestions.append(self.__error_item(e))
 
         self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
 
