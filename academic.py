@@ -49,18 +49,16 @@ class Academic(kp.Plugin):
 
         try:
             plaintext = self.__get_doi(user_input, "text/x-bibliography")
-            bibtex = self.__get_doi(user_input, "application/x-bibtex")
-            url = self.__doi_url(user_input)
+            suggestions.append(self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT))
+            self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
 
-            suggestions.extend((
-                self.__result_item(bibtex, self.ITEMTEXT_BIBTEX),
-                self.__result_item(plaintext, self.ITEMTEXT_PLAINTEXT),
-                self.__result_item(url, self.ITEMTEXT_URL)
-            ))
+            bibtex = self.__get_doi(user_input, "application/x-bibtex")
+            suggestions.append(self.__result_item(bibtex, self.ITEMTEXT_BIBTEX))
+            self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
+
         except urllib.error.URLError as e:
             suggestions.append(self.__error_item(e))
-
-        self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
+            self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
 
     def on_execute(self, item, action):
         if item.target() in self.COPYABLE_TARGETS:
