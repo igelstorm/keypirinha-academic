@@ -7,8 +7,17 @@ class Academic(kp.Plugin):
     ITEMCAT_DOI = kp.ItemCategory.USER_BASE + 1
     ITEMCAT_RESULT = kp.ItemCategory.USER_BASE + 1
 
-    ITEMTEXT_PLAINTEXT = { "label": "Copy plaintext reference", "target": "plaintext" }
-    ITEMTEXT_BIBTEX    = { "label": "Copy BibTeX reference", "target": "bibtex" }
+    PARAMS_PLAINTEXT = {
+        "label": "Copy plaintext reference",
+        "target": "plaintext",
+        "content_type": "text/x-bibliography"
+    }
+    PARAMS_BIBTEX = {
+        "label": "Copy BibTeX reference",
+        "target": "bibtex",
+        "content_type": "application/x-bibtex"
+    }
+
     ITEMTEXT_URL       = { "label": "Open URL in browser", "target": "url" }
 
     COPYABLE_TARGETS = [
@@ -42,28 +51,15 @@ class Academic(kp.Plugin):
 
         suggestions = []
 
-        self.__add_suggestion(suggestions, self.__gimme_url(user_input))
-
-        try:
-            self.__add_suggestion(suggestions, self.__gimme_bibtex(user_input))
-            self.__add_suggestion(suggestions, self.__gimme_plaintext(user_input))
-
-        except urllib.error.URLError as e:
-            self.__add_suggestion(suggestions, self.__error_item(e))
+        self.__add_suggestion(suggestions, self.__url_suggestion(user_input))
+        self.__add_suggestion(suggestions, self.__bibtex_suggestion(user_input))
+        self.__add_suggestion(suggestions, self.__plaintext_suggestion(user_input))
 
     def on_execute(self, item, action):
         if item.target() in self.COPYABLE_TARGETS:
             kpu.set_clipboard(item.data_bag())
         if item.target() == "url":
             kpu.web_browser_command(private_mode=False, url=item.data_bag(), execute=True)
-
-    def __get_doi(self, doi, content_type):
-        opener = kpnet.build_urllib_opener()
-        opener.addheaders = [("Accept", content_type)]
-        with opener.open(self.__doi_url(doi)) as response:
-            refce = response.read()
-
-        return refce.decode(encoding="utf-8", errors="strict")
 
     def __result_item(self, content, item_text):
         return self.create_item(
@@ -89,11 +85,25 @@ class Academic(kp.Plugin):
         suggestions.append(suggestion)
         self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
 
-    def __gimme_bibtex(self, user_input):
-        return self.__result_item(self.__get_doi(user_input, "application/x-bibtex"), self.ITEMTEXT_BIBTEX)
+    def __bibtex_suggestion(self, user_input):
+        return self.__get_doi(user_input, self.PARAMS_BIBTEX)
 
-    def __gimme_plaintext(self, user_input):
-        return self.__result_item(self.__get_doi(user_input, "text/x-bibliography"), self.ITEMTEXT_PLAINTEXT)
+    def __plaintext_suggestion(self, user_input):
+        return self.__get_doi(user_input, self.PARAMS_PLAINTEXT)
 
-    def __gimme_url(self, user_input):
+    def __url_suggestion(self, user_input):
         return self.__result_item(self.__doi_url(user_input), self.ITEMTEXT_URL)
+
+    def __get_doi(self, doi, params):
+        try:
+            opener = kpnet.build_urllib_opener()
+            opener.addheaders = [("Accept", params["content_type"])]
+            with opener.open(self.__doi_url(doi)) as response:
+                refce = response.read()
+
+            return self.__result_item(
+                refce.decode(encoding="utf-8", errors="strict"),
+                params
+            )
+        except urllib.error.URLError as e:
+            return self.__add_suggestion(suggestions, self.__error_item(e))
