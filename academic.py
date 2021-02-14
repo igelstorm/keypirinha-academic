@@ -1,24 +1,9 @@
 import keypirinha as kp
 import keypirinha_util as kpu
-import keypirinha_net as kpnet
-import urllib
+from .doi import Doi
 
 class Academic(kp.Plugin):
     ITEMCAT_DOI = kp.ItemCategory.USER_BASE + 1
-    ITEMCAT_RESULT = kp.ItemCategory.USER_BASE + 1
-
-    PARAMS_PLAINTEXT = {
-        "label": "Copy plaintext reference",
-        "target": "plaintext",
-        "content_type": "text/x-bibliography"
-    }
-    PARAMS_BIBTEX = {
-        "label": "Copy BibTeX reference",
-        "target": "bibtex",
-        "content_type": "application/x-bibtex"
-    }
-
-    ITEMTEXT_URL       = { "label": "Open URL in browser", "target": "url" }
 
     COPYABLE_TARGETS = [
         "plaintext", "bibtex"
@@ -51,9 +36,10 @@ class Academic(kp.Plugin):
 
         suggestions = []
 
-        self.__add_suggestion(suggestions, self.__url_suggestion(user_input))
-        self.__add_suggestion(suggestions, self.__bibtex_suggestion(user_input))
-        self.__add_suggestion(suggestions, self.__plaintext_suggestion(user_input))
+        doi = Doi(doi = user_input, plugin = self)
+        self.__add_suggestion(suggestions, doi.url())
+        self.__add_suggestion(suggestions, doi.bibtex())
+        self.__add_suggestion(suggestions, doi.plaintext())
 
     def on_execute(self, item, action):
         if item.target() in self.COPYABLE_TARGETS:
@@ -61,49 +47,6 @@ class Academic(kp.Plugin):
         if item.target() == "url":
             kpu.web_browser_command(private_mode=False, url=item.data_bag(), execute=True)
 
-    def __result_item(self, content, item_text):
-        return self.create_item(
-                category=self.ITEMCAT_RESULT,
-                label=item_text["label"],
-                short_desc=content,
-                target=item_text["target"],
-                args_hint=kp.ItemArgsHint.FORBIDDEN,
-                hit_hint=kp.ItemHitHint.NOARGS,
-                data_bag=content
-            )
-
-    def __error_item(self, error):
-        return self.create_error_item(
-            label="Something went wrong...",
-            short_desc=f"{error.code}: {error.reason}"
-        )
-
-    def __doi_url(self, doi):
-        return "https://doi.org/" + doi
-
     def __add_suggestion(self, suggestions, suggestion):
         suggestions.append(suggestion)
         self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)
-
-    def __bibtex_suggestion(self, user_input):
-        return self.__get_doi(user_input, self.PARAMS_BIBTEX)
-
-    def __plaintext_suggestion(self, user_input):
-        return self.__get_doi(user_input, self.PARAMS_PLAINTEXT)
-
-    def __url_suggestion(self, user_input):
-        return self.__result_item(self.__doi_url(user_input), self.ITEMTEXT_URL)
-
-    def __get_doi(self, doi, params):
-        try:
-            opener = kpnet.build_urllib_opener()
-            opener.addheaders = [("Accept", params["content_type"])]
-            with opener.open(self.__doi_url(doi)) as response:
-                refce = response.read()
-
-            return self.__result_item(
-                refce.decode(encoding="utf-8", errors="strict"),
-                params
-            )
-        except urllib.error.URLError as e:
-            return self.__add_suggestion(suggestions, self.__error_item(e))
