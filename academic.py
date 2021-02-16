@@ -36,7 +36,7 @@ class Academic(kp.Plugin):
 
         suggestions = []
 
-        doi = Doi(doi = user_input, plugin = self)
+        doi = Doi(doi = user_input)
         self.__add_suggestion(suggestions, doi.url())
         self.__add_suggestion(suggestions, doi.bibtex())
         self.__add_suggestion(suggestions, doi.plaintext())
@@ -47,6 +47,11 @@ class Academic(kp.Plugin):
         if item.target() == "url":
             kpu.web_browser_command(private_mode=False, url=item.data_bag(), execute=True)
 
-    def __add_suggestion(self, suggestions, suggestion):
-        suggestions.append(suggestion)
+    def __add_suggestion(self, suggestions, item_params):
+        if item_params["target"] == "error":
+            item = self.create_error_item(**item_params)
+        else:
+            item = self.create_item(**item_params)
+
+        suggestions.append(item)
         self.set_suggestions(suggestions, kp.Match.ANY, kp.Sort.NONE)

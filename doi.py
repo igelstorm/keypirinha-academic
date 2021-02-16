@@ -16,9 +16,8 @@ class Doi:
         "content_type": "text/x-bibliography"
     }
 
-    def __init__(self, doi, plugin):
+    def __init__(self, doi):
         self._url = "https://doi.org/" + doi
-        self._plugin = plugin
 
     def url(self):
         return self.__result_item(self._url, self.ITEMTEXT_URL)
@@ -30,21 +29,22 @@ class Doi:
         return self.__get_doi(self._url, self.PARAMS_PLAINTEXT)
 
     def __result_item(self, content, item_text):
-        return self._plugin.create_item(
-            category=self.ITEMCAT_RESULT,
-            label=item_text["label"],
-            short_desc=content,
-            target=item_text["target"],
-            args_hint=kp.ItemArgsHint.FORBIDDEN,
-            hit_hint=kp.ItemHitHint.NOARGS,
-            data_bag=content
-        )
+        return {
+            "category": self.ITEMCAT_RESULT,
+            "label": item_text["label"],
+            "short_desc": content,
+            "target": item_text["target"],
+            "args_hint": kp.ItemArgsHint.FORBIDDEN,
+            "hit_hint": kp.ItemHitHint.NOARGS,
+            "data_bag": content
+        }
 
     def __error_item(self, error):
-        return self._plugin.create_error_item(
-            label="Something went wrong...",
-            short_desc=f"{error.code}: {error.reason}"
-        )
+        return {
+            "target": "error",
+            "label": "Something went wrong...",
+            "short_desc": f"{error.code}: {error.reason}"
+        }
 
     def __get_doi(self, doi, params):
         try:
