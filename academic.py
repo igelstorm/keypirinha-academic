@@ -5,10 +5,6 @@ from .doi import Doi
 class Academic(kp.Plugin):
     ITEMCAT_DOI = kp.ItemCategory.USER_BASE + 1
 
-    COPYABLE_TARGETS = [
-        "plaintext", "bibtex"
-    ]
-
     def __init__(self):
         super().__init__()
 
@@ -33,6 +29,8 @@ class Academic(kp.Plugin):
             return
         if self.should_terminate(0.2):
             return
+        if user_input == "":
+            return
 
         suggestions = []
 
@@ -42,7 +40,7 @@ class Academic(kp.Plugin):
         self.__add_suggestion(suggestions, doi.plaintext())
 
     def on_execute(self, item, action):
-        if item.target() in self.COPYABLE_TARGETS:
+        if item.target() in ["plaintext", "bibtext"]:
             kpu.set_clipboard(item.data_bag())
         if item.target() == "url":
             kpu.web_browser_command(private_mode=False, url=item.data_bag(), execute=True)
