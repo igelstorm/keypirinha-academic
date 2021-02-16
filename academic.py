@@ -1,10 +1,9 @@
+from . import categories
+from .doi import Doi
 import keypirinha as kp
 import keypirinha_util as kpu
-from .doi import Doi
 
 class Academic(kp.Plugin):
-    ITEMCAT_DOI = kp.ItemCategory.USER_BASE + 1
-
     def __init__(self):
         super().__init__()
 
@@ -14,7 +13,7 @@ class Academic(kp.Plugin):
     def on_catalog(self):
         catalog = [
             self.create_item(
-                category=self.ITEMCAT_DOI,
+                category=categories.DOI,
                 label="DOI",
                 short_desc="Look up a DOI",
                 target="doi",
@@ -25,7 +24,7 @@ class Academic(kp.Plugin):
         self.set_catalog(catalog)
 
     def on_suggest(self, user_input, items_chain):
-        if not items_chain or items_chain[-1].category() != self.ITEMCAT_DOI:
+        if not items_chain or items_chain[-1].category() != categories.DOI:
             return
         if self.should_terminate(0.2):
             return

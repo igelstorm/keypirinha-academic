@@ -1,8 +1,7 @@
+from . import categories
 import keypirinha as kp
 import keypirinha_net as kpnet
 import urllib
-
-ITEMCAT_RESULT = kp.ItemCategory.USER_BASE + 1
 
 def http_request(url, content_type, label, target):
     try:
@@ -12,7 +11,7 @@ def http_request(url, content_type, label, target):
             content = response.read()
 
         return {
-            "category": ITEMCAT_RESULT,
+            "category": categories.RESULT,
             "label": label,
             "short_desc": content,
             "target": target,
