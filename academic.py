@@ -1,5 +1,6 @@
 from . import categories
 from .doi import Doi
+from .journal import Journal
 import keypirinha as kp
 import keypirinha_util as kpu
 
@@ -19,12 +20,20 @@ class Academic(kp.Plugin):
                 target="doi",
                 args_hint=kp.ItemArgsHint.REQUIRED,
                 hit_hint=kp.ItemHitHint.NOARGS
+            ),
+            self.create_item(
+                category=categories.JOURNAL,
+                label="Journal abbreviation",
+                short_desc="Abbreviate a journal name",
+                target="journal",
+                args_hint=kp.ItemArgsHint.REQUIRED,
+                hit_hint=kp.ItemHitHint.NOARGS
             )
         ]
         self.set_catalog(catalog)
 
     def on_suggest(self, user_input, items_chain):
-        if not items_chain or items_chain[-1].category() != categories.DOI:
+        if not items_chain:
             return
         if self.should_terminate(0.2):
             return
@@ -32,11 +41,14 @@ class Academic(kp.Plugin):
             return
 
         suggestions = []
-
-        doi = Doi(doi = user_input)
-        self.__add_suggestion(suggestions, doi.url())
-        self.__add_suggestion(suggestions, doi.bibtex())
-        self.__add_suggestion(suggestions, doi.plaintext())
+        if items_chain[-1].category() == categories.DOI:
+            doi = Doi(doi = user_input)
+            self.__add_suggestion(suggestions, doi.url())
+            self.__add_suggestion(suggestions, doi.bibtex())
+            self.__add_suggestion(suggestions, doi.plaintext())
+        if items_chain[-1].category() == categories.JOURNAL:
+            journal = Journal(user_input)
+            self.__add_suggestion(suggestions, journal.abbreviation())
 
     def on_execute(self, item, action):
         if item.target() in ["plaintext", "bibtext"]:

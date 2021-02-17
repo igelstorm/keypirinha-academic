@@ -3,12 +3,13 @@ import keypirinha as kp
 import keypirinha_net as kpnet
 import urllib
 
-def http_request(url, content_type, label, target):
+def http_request(url, label, target, content_type = None):
     try:
         opener = kpnet.build_urllib_opener()
-        opener.addheaders = [("Accept", content_type)]
+        if content_type:
+            opener.addheaders = [("Accept", content_type)]
         with opener.open(url) as response:
-            content = response.read()
+            content = response.read().decode()
 
         return {
             "category": categories.RESULT,
